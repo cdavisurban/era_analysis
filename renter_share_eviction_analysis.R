@@ -62,7 +62,7 @@ plc_not_evic <- c("4260000", #philadelphia
 )
 
 
-
+#JA: Might be worth just adding a note that you need a Census API Key to use this function (just for reproducability)
 #download number of renter households by state
 renter_states <- get_acs(geography = "state", variables = "B25003_003", year = 2019, survey = "acs1")
 
