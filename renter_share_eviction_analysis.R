@@ -8,7 +8,9 @@ library(urbnthemes)
 #this isn't using mapping data, but this is the style we wanted
 set_urbn_defaults("map")
 #states that had moratoriums
-states <- c(
+#JA: I'm just going to assume that these manually-assigned eviction designations for 
+# states, counties, and places are all correct throughout
+states <- c( 
   "NJ", #def #stops 9/1, but below 80% median income, covid-related hardship
   "NY", #def pauses judgements where tenant can show covid-19 hardship
   "NM" #def demonstrated inability to pay rent by preponderance of evidence
@@ -36,12 +38,12 @@ cty_fips <- c(
 #places with moratoriums
 place_fips <- c("0653000", #oakland
                 "0656000", #pasadena
-                "0606308", #beverly hills
+                "0606308", #beverly hills #JA: Not being downloaded below
                 "0626000", #fremont
                 "0627000", #fresno
                 "0643000", #long beach
-                "0649138", #moorpark
-                "0648648", #monrovia
+                "0649138", #moorpark #JA: Not being downloaded below
+                "0648648", #monrovia #JA: Not being downloaded below
                 "0681666", #vallejo
                 "0681204", #union city
                 "4805000", #austin 
@@ -60,7 +62,7 @@ plc_not_evic <- c("4260000", #philadelphia
 )
 
 
-
+#JA: Might be worth just adding a note that you need a Census API Key to use this function (just for reproducability)
 #download number of renter households by state
 renter_states <- get_acs(geography = "state", variables = "B25003_003", year = 2019, survey = "acs1")
 
@@ -72,7 +74,7 @@ renter_counties <- get_acs(geography = "county", variables = "B25003_003", year 
     GEOID %in% cty_not_evic ~ "Temporary suspension or delay during rental assistance application", 
     T ~ NA_character_))
 
-#download number of renter households by county and keep only ones that have some form of moratoria or delay
+#download number of renter households by place and keep only ones that have some form of moratoria or delay
 renter_places <- get_acs(geography = "place", variables = "B25003_003", year = 2019, survey = "acs1") %>% 
   filter(GEOID %in% c(place_fips, plc_not_evic)) %>% 
   mutate(is_protected_l = case_when(
@@ -132,13 +134,13 @@ final_vals <- renter_states_adj %>%
          final = initial - to_subtract + to_add) %>% 
   select(is_protected, final) %>% 
   janitor::adorn_percentages("col") %>% 
-  mutate(is_protected = factor(is_protected, levels = c("Some form of moratoria", 
+  mutate(is_protected = factor(is_protected, levels = c("Some form of moratoria", #JA: I think the singular "moratorium" reads better here
                                                         "Temporary suspension or delay during rental assistance application", 
                                                         "Limited or no protections"))) %>% 
   arrange(is_protected) %>% 
   mutate(temp = 1)
 
-#write out data
+#write out data #JA: Is this written out data being used anywhere? If not, maybe can be deleted
 final_vals %>% 
   write_csv("share_renter_households.csv")
 
@@ -152,8 +154,8 @@ my_plot_5<- final_vals %>%
        title = "Share of Renter Households in States or Jurisdictions with Different Types of Eviction Protections") + 
   scale_fill_manual( values = as.character(c(palette_urbn_cyan[c(7, 2)], palette_urbn_gray[4])))+
   scale_y_reverse() +
-  theme(legend.text = element_text(size = 20),
-        legend.position = "right") + 
+  theme(legend.text = element_text(size = 20), #JA: I think this line is overwritten below and can be removed
+        legend.position = "right") + # JA: Can maybe add this to the theme() below just for ease of following along
   coord_flip() + 
   theme(legend.text = element_text(size = 10), 
         legend.title = element_text(size = 10), 
